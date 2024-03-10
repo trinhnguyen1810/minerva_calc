@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question 1</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f7fafc; 
+            color: #4a5568; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100vh;
+            margin: 0;
+            margin-top: 0px; 
+        }
+
+        #logo {
+            max-width: 200px;
+            margin-bottom: 2rem;
+            margin-top:  5px; 
+        }
+
+        #budgetCalculator {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            margin-top:  0px; 
+        }
+
+        .container {
+            max-width: 80vw; 
+            padding: 3rem;
+            border-radius: 1rem;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            margin-top: 0px; 
+        }
+
+        h1 {
+            font-size: 1.5rem; 
+            margin-bottom: 1rem;
+        }
+
+        p {
+            font-size: 1.25rem; /* Adjust paragraph font size */
+            margin-bottom: 2rem;
+        }
+
+        .form-radio {
+            
+        }
+
+        #progressBar {
+            height: 0.5rem;
+            background-color: #e2e8f0; 
+            margin-bottom: 2rem;
+        }
+
+        #progressBarFill {
+            height: 100%;
+            width: 0%;
+            background-color: #4299e1; 
+            border-radius: 0.25rem;
+        }
+
+        #warning {
+            color: #e53e3e;
+            margin-bottom: 1rem;
+        }
+
+        #nextBtn {
+            float: right;
+        }
+    </style>
+</head>
+
+<body>
+    <img src="/static/logo.jpeg" alt="Minerva Budget Calculator Logo" id="logo" class="mx-auto mb-8">
+    <div id="budgetCalculator">Budget Calculator</div>
+
+    <div class="container mx-auto p-8 rounded-lg text-left">
+        <h1>Question 1/6</h1>
+        <div id="progressBar">
+            <div id="progressBarFill"></div>
+        </div>
+        <p>Do you want a weekly or monthly recommender?</p>
+        <div class="flex flex-col space-y-4">
+            <label class="flex items-center space-x-4 cursor-pointer">
+                <input type="radio" name="recommender" value="weekly" class="form-radio">
+                <span class="text-lg text-gray-700">Weekly</span>
+            </label>
+            <label class="flex items-center space-x-4 cursor-pointer">
+                <input type="radio" name="recommender" value="monthly" class="form-radio">
+                <span class="text-lg text-gray-700">Monthly</span>
+            </label>
+        </div>
+        <div class="text-red-500 mb-4 hidden" id="warning">Please select an option.</div>
+        <a href="{{ url_for('question2') }}"></a>
+        <button id="nextBtn" class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition duration-300 ease-in-out">Next</button>
+    </a>
+    </div>
+
+    <script>
+        document.getElementById("nextBtn").addEventListener("click", function () {
+            var radios = document.getElementsByName("recommender");
+            var selected = false;
+            for (var i = 0; i < radios.length; i++) {
+                if (radios[i].checked) {
+                    selected = true;
+                    break;
+                }
+            }
+            if (!selected) {
+                document.getElementById("warning").classList.remove("hidden");
+            } else {
+                document.getElementById("warning").classList.add("hidden");
+                window.location.href = "/question2"; 
+        });
+    </script>
+</body>
+
+</html>

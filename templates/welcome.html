@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to the Minerva Budget Calculator</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="static/styles/css/main.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 flex justify-center items-center h-screen">
+    <div class="container mx-auto text-center">
+        <h1 class="text-4xl font-bold mb-8">Welcome to the Minerva Budget Calculator</h1>
+        <img src="/static/logo.jpeg" alt="Minerva Budget Calculator Logo" class="mx-auto mb-8" style="max-width: 200px;">
+        <p class="text-lg text-gray-700 mb-8">This tool will help you manage your budget effectively. Click the button below to get started.</p>
+        <a href="{{ url_for('question1') }}" class="px-4 py-3 text-xl font-bold text-white transition-colors bg-black rounded-md shadow outline-none hover:bg-neutral-800 focus:bg-neutral-800 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-neutral-300">Start</a>
+
+    </div>
+</body>
+</html>

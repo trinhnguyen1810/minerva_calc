@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question 4: Expenses</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f7fafc; 
+            color: #4a5568; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100vh;
+            margin: 0;
+            margin-top: 0; 
+        }
+
+        #logo {
+            max-width: 200px;
+            margin-bottom: 2rem;
+            margin-top: 5px;
+        }
+
+        #budgetCalculator {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 80vw; 
+            padding: 3rem;
+            border-radius: 1rem;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            margin-top: 0px; 
+            position: relative; 
+        }
+
+        #progressBar {
+            height: 0.5rem;
+            background-color: #e2e8f0; 
+            margin-bottom: 2rem;
+            width: 100%;
+            border-radius: 0.25rem;
+        }
+
+        #progressBarFill {
+            height: 100%;
+            width: 65%; 
+            background-color: #4299e1; 
+            border-radius: 0.25rem;
+        }
+
+        h1 {
+            font-size: 1.5rem; 
+            margin-bottom: 1rem;
+        }
+
+        p {
+            font-size: 1.25rem; 
+            margin-bottom: 2rem;
+        }
+
+        .slider-container {
+            margin-bottom: 1rem; 
+            width: 100%;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .slider-label span {
+            font-size: 1rem;
+        }
+
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 15px;
+            border-radius: 5px;
+            background: #d3d3d3; 
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #4299e1; 
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #4299e1; 
+            cursor: pointer;
+        }
+
+        .note {
+            font-style: italic;
+            font-size: 0.875rem; 
+            margin-top: 0.5rem;
+        }
+
+        #nextBtn {
+            float: right;
+        }
+    </style>
+</head>
+
+<body>
+    <img src="/static/logo.jpeg" alt="Minerva Budget Calculator Logo" id="logo" class="mx-auto mb-8">
+    <div id="budgetCalculator">Budget Calculator</div>
+
+    <div class="container mx-auto p-8 rounded-lg text-left">
+        <div id="progressBar">
+            <div id="progressBarFill"></div> 
+        </div>
+        <h1>Question 4: Expenses</h1>
+        <p>How willing are you going to spend for each category?</p>
+        <div class="slider-container">
+            <div class="slider-label">
+                <span>Groceries/Food</span>
+                <span>$$$</span>
+            </div>
+            <input type="range" id="groceries" name="groceries" class="slider mb-4" min="1" max="3">
+        </div>
+        <div class="slider-container">
+            <div class="slider-label">
+                <span>Transportation (e.g., public transport, gas)</span>
+                <span>$$$</span>
+            </div>
+            <input type="range" id="transportation" name="transportation" class="slider mb-4" min="1" max="3">
+        </div>
+        <div class="slider-container">
+            <div class="slider-label">
+                <span>Entertainment/Leisure</span>
+                <span>$$$</span>
+            </div>
+            <input type="range" id="entertainment" name="entertainment" class="slider mb-4" min="1" max="3">
+        </div>
+        <div class="slider-container">
+            <div class="slider-label">
+                <span>Health & Fitness</span>
+                <span>$$$</span>
+            </div>
+            <input type="range" id="healthFitness" name="healthFitness" class="slider mb-4" min="1" max="3">
+        </div>
+        <div class="slider-container">
+            <div class="slider-label">
+                <span>Miscellaneous (e.g., shopping, dining out)</span>
+                <span>$$$</span>
+            </div>
+            <input type="range" id="miscellaneous" name="miscellaneous" class="slider mb-4" min="1" max="3">
+        </div>
+        <p class="note">Range: $ (Least willing) - $$$ (Most willing)</p>
+        <a href="{{ url_for('question5') }}"></a>
+        <button id="nextBtn" class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition duration-300 ease-in-out">Next</button>
+    </a>
+    </div>
+
+    <script>
+        document.getElementById("nextBtn").addEventListener("click", function () {
+        });
+    </script>
+</
