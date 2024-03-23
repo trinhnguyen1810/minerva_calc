@@ -52,16 +52,12 @@ def recommendations():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
+"""
 @app.route('/recommendations')
 def recommendations():
     budget_type = request.args.get('budget_type')
     income_sources = request.args.get('income_sources')
     work_study_money = request.args.get('work_study_money')
     external_source = request.args.get('external_source')
-
-    return render_template('recommendations.html', budget_type=budget_type, income_sources=income_sources, work_study_money=work_study_money, external_source=external_source)
-
-if __name__ == '__main__':
-    app.run(debug=True)
-
+    return render_template('recommendations.html',budget_type=budget_type, income_sources=income_sources, work_study_money=work_study_money, external_source=external_source)
+"""
