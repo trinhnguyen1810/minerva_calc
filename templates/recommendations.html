@@ -3,20 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expense Allocation</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js">
-    <style>
-        canvas {
-            max-width: 600px;
-            margin: auto;
-            display: block; /* Ensure canvas is a block-level element */
-        }
-    </style>
+    <title>Your Budget Recommendations</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
-    <h1 class="text-center text-2xl font-bold mt-8 mb-4">Expense Allocation</h1>
-    <canvas id="expenseChart"></canvas>
+<body class="bg-gray-100">
+    <img src="/static/logo.jpeg" alt="Minerva Budget Calculator Logo" class="mx-auto mt-8 mb-8" style="max-width: 200px;">
+    
+    <!-- Chart data hidden element -->
+    <script id="chartData" type="application/json">
+        {{ chart_data|safe }}
+    </script>
 
-    <script src="static/expenses.js"></script>
+    <div class="container mx-auto px-4">
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h1 class="text-2xl font-bold mb-4">Your Budget Breakdown</h1>
+            
+            <!-- Chart Container -->
+            <div class="mb-8" style="height: 400px;">
+                <canvas id="expenseChart"></canvas>
+            </div>
+
+            <!-- Recommendations Table -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for category, amount in recommendations.items() %}
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-2">{{ category|title }}</h3>
+                    <p class="text-xl">${{ "%.2f"|format(amount) }}
+                        {% if time_preference == 'weekly' %}
+                        <span class="text-sm text-gray-600">
+                            (${{ "%.2f"|format(amount/4) }} weekly)
+                        </span>
+                        {% endif %}
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart initialization -->
+    <script src="{{ url_for('static', filename='expenses.js') }}"></script>
 </body>
 </html>

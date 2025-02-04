@@ -1,63 +1,186 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, session, redirect, url_for, flash
+from budget.calculator import BudgetCalculator
+import json
+import os
 
 app = Flask(__name__)
+app.secret_key = os.urandom(24).hex() # Change this in production!
 
-# Define routes
 @app.route('/')
 def welcome():
+    """Welcome page route."""
+    session.clear()  # Clear any existing session data
     return render_template('welcome.html')
 
 @app.route('/question1', methods=['GET', 'POST'])
 def question1():
+    """Time preference selection route."""
     if request.method == 'POST':
-        #budget_type = request.form['budget_type']
-        return redirect(url_for('question2'))
+        recommender = request.form.get('recommender')
+        if recommender in ['weekly', 'monthly']:
+            session['time_preference'] = recommender
+            return redirect(url_for('question2'))
+        flash('Please select a valid time preference')
     return render_template('question1.html')
 
 @app.route('/question2', methods=['GET', 'POST'])
 def question2():
-    #if request.method == 'POST':
-        #income_sources = request.form['income_sources']
-        #return redirect(url_for('question3'))
+    """Income input route."""
+    if request.method == 'POST':
+        try:
+            work_study = float(request.form.get('workStudyIncome', 0))
+            external = float(request.form.get('externalResource', 0))
+            
+            # Validate income amounts
+            if work_study < 0 or external < 0:
+                flash('Income amounts cannot be negative')
+                return render_template('question2.html')
+                
+            session['income'] = {
+                'work_study': work_study,
+                'external': external
+            }
+            return redirect(url_for('question3'))
+        except ValueError:
+            flash('Please enter valid numbers for income')
     return render_template('question2.html')
 
-app.route('/question3', methods=['GET', 'POST'])
+@app.route('/question3', methods=['GET', 'POST'])
 def question3():
-    #if request.method == 'POST':
-        #savings = request.form['savings']
-        #return redirect(url_for('question4'))
+    """Savings goal route."""
+    if request.method == 'POST':
+        try:
+            savings = float(request.form.get('savings', 0))
+            if 0 <= savings <= 50:
+                session['savings_goal'] = savings
+                return redirect(url_for('question4'))
+            flash('Savings percentage must be between 0 and 50%')
+        except ValueError:
+            flash('Please enter a valid savings percentage')
     return render_template('question3.html')
 
 @app.route('/question4', methods=['GET', 'POST'])
 def question4():
-    #if request.method == 'POST':
-        #return redirect(url_for('question5'))
+    """Spending preferences route."""
+    if request.method == 'POST':
+        try:
+            preferences = {
+                'food': int(request.form.get('groceries', 2)),
+                'transportation': int(request.form.get('transportation', 2)),
+                'entertainment': int(request.form.get('entertainment', 2)),
+                'personal': int(request.form.get('miscellaneous', 2)),
+                'gym': int(request.form.get('healthFitness', 2))
+            }
+            
+            # Validate all preferences are 1, 2, or 3
+            if all(1 <= pref <= 3 for pref in preferences.values()):
+                session['spending_preferences'] = preferences
+                return redirect(url_for('question5'))
+            flash('Please rate all categories from 1 to 3')
+        except ValueError:
+            flash('Invalid preference values')
     return render_template('question4.html')
 
 @app.route('/question5', methods=['GET', 'POST'])
 def question5():
-    #if request.method == 'POST':
-        #return redirect(url_for('question6'))
+    """Fixed expenses route."""
+    if request.method == 'POST':
+        try:
+            loans = float(request.form.get('loansPayments', 0))
+            other = float(request.form.get('otherExpensesPayments', 0))
+            
+            # Validate expenses are non-negative
+            if loans < 0 or other < 0:
+                flash('Expenses cannot be negative')
+                return render_template('question5.html')
+                
+            session['fixed_expenses'] = {
+                'loans': loans,
+                'other': other
+            }
+            return redirect(url_for('question6'))
+        except ValueError:
+            flash('Please enter valid numbers for expenses')
     return render_template('question5.html')
 
 @app.route('/question6', methods=['GET', 'POST'])
 def question6():
-    #if request.method == 'POST':
-        #return redirect(url_for('recommendations'))
+    """Location selection route."""
+    if request.method == 'POST':
+        location = request.form.get('location')
+        valid_locations = ['San Francisco', 'Berlin', 'Taipei', 
+                         'Hyderabad', 'Seoul', 'Buenos Aires']
+        
+        if location in valid_locations:
+            session['location'] = location
+            return redirect(url_for('recommendations'))
+        flash('Please select a valid location')
     return render_template('question6.html')
 
 @app.route('/recommendations')
 def recommendations():
-    return render_template('recommendations.html')
+    """Budget recommendations route."""
+    # Check if all required data is in session
+    required_keys = ['income', 'savings_goal', 'spending_preferences', 
+                    'fixed_expenses', 'location']
+    if not all(key in session for key in required_keys):
+        flash('Please complete all questions first')
+        return redirect(url_for('welcome'))
+    
+    try:
+        calculator = BudgetCalculator()
+        user_data = {
+            'income': session['income'],
+            'savings_goal': session['savings_goal'],
+            'spending_preferences': session['spending_preferences'],
+            'fixed_expenses': session['fixed_expenses'],
+            'location': session['location']
+        }
+        
+        recommendations = calculator.calculate_recommendations(user_data)
+        
+        # Verify totals
+        total_income = sum(session['income'].values())
+        total_allocated = sum(recommendations.values())
+        
+        if abs(total_income - total_allocated) > 0.01:  # Allow for small floating point differences
+            flash('Warning: Budget calculations may be incorrect')
+        
+        # Prepare chart data
+        chart_data = {
+            'labels': list(recommendations.keys()),
+            'values': list(recommendations.values())
+        }
+        
+        return render_template(
+            'recommendations.html',
+            recommendations=recommendations,
+            chart_data=json.dumps(chart_data),
+            time_preference=session.get('time_preference', 'monthly'),
+            total_income=total_income,
+            total_allocated=total_allocated
+        )
+    except Exception as e:
+        flash(f'An error occurred: {str(e)}')
+        return redirect(url_for('welcome'))
+
+@app.route('/reset')
+def reset():
+    """Reset session and return to welcome page."""
+    session.clear()
+    return redirect(url_for('welcome'))
+
+@app.errorhandler(404)
+def page_not_found(e):
+    """Handle 404 errors."""
+    flash('Page not found')
+    return redirect(url_for('welcome'))
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    """Handle 500 errors."""
+    flash('An internal server error occurred')
+    return redirect(url_for('welcome'))
 
 if __name__ == '__main__':
     app.run(debug=True)
-"""
-@app.route('/recommendations')
-def recommendations():
-    budget_type = request.args.get('budget_type')
-    income_sources = request.args.get('income_sources')
-    work_study_money = request.args.get('work_study_money')
-    external_source = request.args.get('external_source')
-    return render_template('recommendations.html',budget_type=budget_type, income_sources=income_sources, work_study_money=work_study_money, external_source=external_source)
-"""
