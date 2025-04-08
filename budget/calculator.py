@@ -1,4 +1,4 @@
-from .config import CITY_MULTIPLIERS, SF_BASELINES
+from budget.config import CITY_MULTIPLIERS, SF_BASELINES
 
 class BudgetCalculator:
     def __init__(self):

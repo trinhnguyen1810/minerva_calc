@@ -4,13 +4,37 @@ import json
 import os
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24).hex() # Change this in production!
+app.secret_key = 'dev_secret_key_123'  # Fixed key for development
+
+def check_previous_answers(*required_keys):
+    """Check if previous questions have been answered."""
+    if not all(key in session for key in required_keys):
+        missing = [key for key in required_keys if key not in session]
+        flash(f'Please complete previous questions first.')
+        if 'time_preference' not in session:
+            return redirect(url_for('question1'))
+        elif 'income' not in session:
+            return redirect(url_for('question2'))
+        elif 'savings_goal' not in session:
+            return redirect(url_for('question3'))
+        elif 'spending_preferences' not in session:
+            return redirect(url_for('question4'))
+        elif 'fixed_expenses' not in session:
+            return redirect(url_for('question5'))
+        else:
+            return redirect(url_for('question1'))
+    return None
 
 @app.route('/')
 def welcome():
     """Welcome page route."""
-    session.clear()  # Clear any existing session data
     return render_template('welcome.html')
+
+@app.route('/reset')
+def reset():
+    """Reset session and return to welcome page."""
+    session.clear()
+    return redirect(url_for('welcome'))
 
 @app.route('/question1', methods=['GET', 'POST'])
 def question1():
@@ -26,12 +50,15 @@ def question1():
 @app.route('/question2', methods=['GET', 'POST'])
 def question2():
     """Income input route."""
+    check = check_previous_answers('time_preference')
+    if check:
+        return check
+        
     if request.method == 'POST':
         try:
             work_study = float(request.form.get('workStudyIncome', 0))
             external = float(request.form.get('externalResource', 0))
             
-            # Validate income amounts
             if work_study < 0 or external < 0:
                 flash('Income amounts cannot be negative')
                 return render_template('question2.html')
@@ -48,6 +75,10 @@ def question2():
 @app.route('/question3', methods=['GET', 'POST'])
 def question3():
     """Savings goal route."""
+    check = check_previous_answers('time_preference', 'income')
+    if check:
+        return check
+        
     if request.method == 'POST':
         try:
             savings = float(request.form.get('savings', 0))
@@ -62,6 +93,10 @@ def question3():
 @app.route('/question4', methods=['GET', 'POST'])
 def question4():
     """Spending preferences route."""
+    check = check_previous_answers('time_preference', 'income', 'savings_goal')
+    if check:
+        return check
+        
     if request.method == 'POST':
         try:
             preferences = {
@@ -72,7 +107,6 @@ def question4():
                 'gym': int(request.form.get('healthFitness', 2))
             }
             
-            # Validate all preferences are 1, 2, or 3
             if all(1 <= pref <= 3 for pref in preferences.values()):
                 session['spending_preferences'] = preferences
                 return redirect(url_for('question5'))
@@ -84,12 +118,15 @@ def question4():
 @app.route('/question5', methods=['GET', 'POST'])
 def question5():
     """Fixed expenses route."""
+    check = check_previous_answers('time_preference', 'income', 'savings_goal', 'spending_preferences')
+    if check:
+        return check
+        
     if request.method == 'POST':
         try:
             loans = float(request.form.get('loansPayments', 0))
             other = float(request.form.get('otherExpensesPayments', 0))
             
-            # Validate expenses are non-negative
             if loans < 0 or other < 0:
                 flash('Expenses cannot be negative')
                 return render_template('question5.html')
@@ -106,13 +143,23 @@ def question5():
 @app.route('/question6', methods=['GET', 'POST'])
 def question6():
     """Location selection route."""
+    check = check_previous_answers('time_preference', 'income', 'savings_goal', 
+                                 'spending_preferences', 'fixed_expenses')
+    if check:
+        return check
+        
+    print("Entering question6 route")
+    print("Current session data:", dict(session))
+    
     if request.method == 'POST':
         location = request.form.get('location')
+        print("Received location:", location)
         valid_locations = ['San Francisco', 'Berlin', 'Taipei', 
                          'Hyderabad', 'Seoul', 'Buenos Aires']
         
         if location in valid_locations:
             session['location'] = location
+            print("Updated session data:", dict(session))
             return redirect(url_for('recommendations'))
         flash('Please select a valid location')
     return render_template('question6.html')
@@ -120,14 +167,22 @@ def question6():
 @app.route('/recommendations')
 def recommendations():
     """Budget recommendations route."""
+    print("\nEntering recommendations route")
+    print("Session data at start:", dict(session))
+    
     # Check if all required data is in session
     required_keys = ['income', 'savings_goal', 'spending_preferences', 
                     'fixed_expenses', 'location']
-    if not all(key in session for key in required_keys):
-        flash('Please complete all questions first')
+    
+    missing_keys = [key for key in required_keys if key not in session]
+    print("Missing keys:", missing_keys)
+    
+    if missing_keys:
+        flash(f'Please complete all questions first. Missing data: {", ".join(missing_keys)}')
         return redirect(url_for('welcome'))
     
     try:
+        print("All required data present, calculating recommendations...")
         calculator = BudgetCalculator()
         user_data = {
             'income': session['income'],
@@ -164,23 +219,23 @@ def recommendations():
         flash(f'An error occurred: {str(e)}')
         return redirect(url_for('welcome'))
 
-@app.route('/reset')
-def reset():
-    """Reset session and return to welcome page."""
-    session.clear()
-    return redirect(url_for('welcome'))
-
 @app.errorhandler(404)
 def page_not_found(e):
     """Handle 404 errors."""
+    # Skip error handling completely for static files
+    if request.path.startswith('/static/'):
+        return None  # This will prevent Flask from showing any error
     flash('Page not found')
     return redirect(url_for('welcome'))
 
 @app.errorhandler(500)
 def internal_server_error(e):
     """Handle 500 errors."""
+    # Skip error handling completely for static files
+    if request.path.startswith('/static/'):
+        return None  # This will prevent Flask from showing any error
     flash('An internal server error occurred')
     return redirect(url_for('welcome'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

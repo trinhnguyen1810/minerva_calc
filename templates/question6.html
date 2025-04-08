@@ -127,50 +127,56 @@
         </div>
         <h1>Question 6: Location</h1>
         <p>Where are you located?</p>
-        <div class="location-options">
-            <div class="location-option" data-location="San Francisco">
-                <span>SF</span>
+        <form method="POST" action="{{ url_for('question6') }}" id="locationForm">
+            <input type="hidden" name="location" id="selectedLocation">
+            <div class="location-options">
+                <div class="location-option" data-location="San Francisco">
+                    <span>SF</span>
+                </div>
+                <div class="location-option" data-location="Berlin">
+                    <span>Berlin</span>
+                </div>
+                <div class="location-option" data-location="Taipei">
+                    <span>Taipei</span>
+                </div>
+                <div class="location-option" data-location="Hyderabad">
+                    <span>Hyderabad</span>
+                </div>
+                <div class="location-option" data-location="Seoul">
+                    <span>Seoul</span>
+                </div>
+                <div class="location-option" data-location="Buenos Aires">
+                    <span>Buenos Aires</span>
+                </div>
             </div>
-            <div class="location-option" data-location="Berlin">
-                <span>Berlin</span>
-            </div>
-            <div class="location-option" data-location="Taipei">
-                <span>Taipei</span>
-            </div>
-            <div class="location-option" data-location="Hyderabad">
-                <span>Hyderabad</span>
-            </div>
-            <div class="location-option" data-location="Seoul">
-                <span>Seoul</span>
-            </div>
-            <div class="location-option" data-location="Buenos Aires">
-                <span>Buenos Aires</span>
-            </div>
-            <div class="location-option" data-location="London">
-                <span>London</span>
-            </div>
-        </div>
-        <p class="note">Select your current location.</p>
-        <button id="nextBtn" class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition duration-300 ease-in-out">Calculate</button>
+            <p class="note">Select your current location.</p>
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="text-red-500 mt-4">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            <button type="submit" id="nextBtn" class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition duration-300 ease-in-out">Calculate</button>
+        </form>
     </div>
 
     <script>
         const locationOptions = document.querySelectorAll('.location-option');
+        const selectedLocationInput = document.getElementById('selectedLocation');
 
         locationOptions.forEach(option => {
             option.addEventListener('click', () => {
                 locationOptions.forEach(opt => opt.classList.remove('selected'));
                 option.classList.add('selected');
+                selectedLocationInput.value = option.dataset.location;
             });
         });
 
-        document.getElementById("nextBtn").addEventListener("click", function () {
-            const selectedLocation = document.querySelector('.location-option.selected');
-            if (selectedLocation) {
-                const location = selectedLocation.dataset.location;
-                console.log("Location selected:", location);
-            } else {
-                console.log("Please select a location.");
+        document.getElementById("locationForm").addEventListener("submit", function(e) {
+            if (!selectedLocationInput.value) {
+                e.preventDefault();
+                alert("Please select a location.");
             }
         });
     </script>

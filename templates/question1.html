@@ -22,14 +22,13 @@
         #logo {
             max-width: 200px;
             margin-bottom: 2rem;
-            margin-top:  5px; 
+            margin-top: 5px; 
         }
 
         #budgetCalculator {
             font-size: 1.5rem;
             font-weight: bold;
             margin-bottom: 2rem;
-            margin-top:  0px; 
         }
 
         .container {
@@ -62,7 +61,7 @@
 
         #progressBarFill {
             height: 100%;
-            width: 0%;
+            width: 16.67%;
             background-color: #4299e1; 
             border-radius: 0.25rem;
         }
@@ -87,40 +86,30 @@
         <div id="progressBar">
             <div id="progressBarFill"></div>
         </div>
-        <p>Do you want a weekly or monthly recommender?</p>
-        <div class="flex flex-col space-y-4">
-            <label class="flex items-center space-x-4 cursor-pointer">
-                <input type="radio" name="recommender" value="weekly" class="form-radio">
-                <span class="text-lg text-gray-700">Weekly</span>
-            </label>
-            <label class="flex items-center space-x-4 cursor-pointer">
-                <input type="radio" name="recommender" value="monthly" class="form-radio">
-                <span class="text-lg text-gray-700">Monthly</span>
-            </label>
-        </div>
-        <div class="text-red-500 mb-4 hidden" id="warning">Please select an option.</div>
-        <a href="{{ url_for('question2') }}"></a>
-        <button id="nextBtn" class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition duration-300 ease-in-out">Next</button>
-    </a>
+        <form method="POST" action="{{ url_for('question1') }}">
+            <p>Do you want a weekly or monthly recommender?</p>
+            <div class="flex flex-col space-y-4">
+                <label class="flex items-center space-x-4 cursor-pointer">
+                    <input type="radio" name="recommender" value="weekly" class="form-radio">
+                    <span class="text-lg text-gray-700">Weekly</span>
+                </label>
+                <label class="flex items-center space-x-4 cursor-pointer">
+                    <input type="radio" name="recommender" value="monthly" class="form-radio">
+                    <span class="text-lg text-gray-700">Monthly</span>
+                </label>
+            </div>
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="text-red-500 mt-4">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            <div class="mt-8 flex justify-end">
+                <button type="submit" class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition duration-300 ease-in-out">Next</button>
+            </div>
+        </form>
     </div>
-
-    <script>
-        document.getElementById("nextBtn").addEventListener("click", function () {
-            var radios = document.getElementsByName("recommender");
-            var selected = false;
-            for (var i = 0; i < radios.length; i++) {
-                if (radios[i].checked) {
-                    selected = true;
-                    break;
-                }
-            }
-            if (!selected) {
-                document.getElementById("warning").classList.remove("hidden");
-            } else {
-                document.getElementById("warning").classList.add("hidden");
-                window.location.href = "/question2"; 
-        });
-    </script>
 </body>
 
 </html>

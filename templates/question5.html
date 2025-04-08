@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Question 4: Fixed Expenses</title>
+    <title>Question 5: Fixed Expenses</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         body {
@@ -95,15 +95,22 @@
         <div id="progressBar">
             <div id="progressBarFill"></div> 
         </div>
-        <h1>Question 4: Fixed Expenses</h1>
+        <h1>Question 5: Fixed Expenses</h1>
         <p>Enter your fixed expenses:</p>
-        <label for="loansPayments" class="block mb-2 text-lg">Loans Payments:</label>
-        <input type="number" id="loansPayments" name="loansPayments" class="expense-input mb-4" placeholder="Enter amount">
-        <label for="otherExpensesPayments" class="block mb-2 text-lg">Other Expenses Payments:</label>
-        <input type="number" id="otherExpensesPayments" name="otherExpensesPayments" class="expense-input mb-4" placeholder="Enter amount">
-        <a href="{{ url_for('question6') }}"></a>
-        <button id="nextBtn" class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition duration-300 ease-in-out">Next</button>
-    </a>
+        <form method="POST" action="{{ url_for('question5') }}">
+            <label for="loansPayments" class="block mb-2 text-lg">Loans Payments:</label>
+            <input type="number" id="loansPayments" name="loansPayments" class="expense-input mb-4" placeholder="Enter amount">
+            <label for="otherExpensesPayments" class="block mb-2 text-lg">Other Expenses Payments:</label>
+            <input type="number" id="otherExpensesPayments" name="otherExpensesPayments" class="expense-input mb-4" placeholder="Enter amount">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="text-red-500 mt-4">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            <button type="submit" id="nextBtn" class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition duration-300 ease-in-out">Next</button>
+        </form>
     </div>
 
     <script>

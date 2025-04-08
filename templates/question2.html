@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Question 2:  Income Resource</title>
+    <title>Question 2: Income Resource</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         body {
@@ -95,47 +95,43 @@
     <div id="budgetCalculator">Budget Calculator</div>
 
     <div class="container mx-auto p-8 rounded-lg text-left">
-        <h1>Question 2/6:  Income Resource</h1>
+        <h1>Question 2/6: Income Resource</h1>
         <div id="progressBar">
             <div id="progressBarFill"></div> 
         </div>
-        <label for="workStudyIncome" class="block mb-2 text-lg">Work-study Income:</label> 
-        <input type="number" id="workStudyIncome" name="workStudyIncome" class="form-input mb-4">
-        <label for="externalResource" class="block mb-2 text-lg">External Resource:</label> 
-        <input type="number" id="externalResource" name="externalResource" class="form-input mb-4">
-        <p class="note">**Note: If you don't have either source, input 0.</p> 
-        <div id="workStudyIncomeError" class="error-message hidden">Please enter a valid work-study income.</div>
-        <div id="externalResourceError" class="error-message hidden">Please enter a valid external resource.</div>
-        <a href="{{ url_for('question1') }}"></a>
-        <button id="nextBtn" class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition duration-300 ease-in-out">Next</button>
-    </a>
-    </div>
+        
+        <form method="POST" action="{{ url_for('question2') }}" id="incomeForm">
+            <label for="workStudyIncome" class="block mb-2 text-lg">Work-study Income:</label> 
+            <input type="number" id="workStudyIncome" name="workStudyIncome" class="form-input mb-4" value="0" step="0.01" min="0">
+            
+            <label for="externalResource" class="block mb-2 text-lg">External Resource:</label> 
+            <input type="number" id="externalResource" name="externalResource" class="form-input mb-4" value="0" step="0.01" min="0">
+            
+            <p class="note">**Note: If you don't have either source, leave it as 0.</p>
+            
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="text-red-500 mt-4">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div class="mt-8 flex justify-between">
+                <a href="{{ url_for('question1') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition duration-300 ease-in-out">Back</a>
+                <button type="submit" id="nextBtn" class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition duration-300 ease-in-out">Next</button>
+            </div>
+        </form>
     </div>
 
     <script>
-        document.getElementById("nextBtn").addEventListener("click", function () {
-            var workStudyIncome = document.getElementById("workStudyIncome").value.trim();
-            var externalResource = document.getElementById("externalResource").value.trim();
-            var workStudyIncomeError = document.getElementById("workStudyIncomeError");
-            var externalResourceError = document.getElementById("externalResourceError");
-            var isValid = true;
-
-            if (!workStudyIncome) {
-                workStudyIncomeError.classList.remove("hidden");
-                isValid = false;
-            } else {
-                workStudyIncomeError.classList.add("hidden");
-            }
-
-            if (!externalResource) {
-                externalResourceError.classList.remove("hidden");
-                isValid = false;
-            } else {
-                externalResourceError.classList.add("hidden");
-            }
-
-            if (isValid) {
-                window.location.href = "/question3"; 
+        document.getElementById("incomeForm").addEventListener("submit", function(e) {
+            const workStudyIncome = parseFloat(document.getElementById("workStudyIncome").value) || 0;
+            const externalResource = parseFloat(document.getElementById("externalResource").value) || 0;
+            
+            if (workStudyIncome < 0 || externalResource < 0) {
+                e.preventDefault();
+                alert("Income amounts cannot be negative");
             }
         });
     </script>

@@ -1,3 +1,11 @@
+CITY_MULTIPLIERS = {
+    'San Francisco': 1.0,  # Base city
+    'Berlin': 0.8,
+    'Taipei': 0.7,
+    'Hyderabad': 0.5,
+    'Seoul': 0.9,
+    'Buenos Aires': 0.6
+}
 
 SF_BASELINES = {
     'food': {'min': 0.30, 'base': 0.35, 'max': 0.60},

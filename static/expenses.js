@@ -1,31 +1,43 @@
+// Expenses chart initialization
 document.addEventListener('DOMContentLoaded', function() {
-    var categories = ['Groceries/Food', 'Transportation', 'Entertainment', 'Health & Fitness', 'Miscellaneous', 'Loans Payments', 'Other expenses'];
-    var amounts = [200, 100, 50, 50, 100, 300, 150];
-    var colors = ['#ff5733', '#ffc300', '#c70039', '#900c3f', '#ff5733', '#ff5733', '#ffc300'];
-
-    var ctx = document.getElementById('expenseChart').getContext('2d');
-    var chart = new Chart(ctx, {
+    const chartData = JSON.parse(document.getElementById('chart-data').textContent);
+    
+    // Create a pie chart using Chart.js
+    const ctx = document.getElementById('expenses-chart').getContext('2d');
+    new Chart(ctx, {
         type: 'pie',
         data: {
-            labels: categories,
+            labels: chartData.labels,
             datasets: [{
-                data: amounts,
-                backgroundColor: colors
+                data: chartData.values,
+                backgroundColor: [
+                    '#FF6384',
+                    '#36A2EB',
+                    '#FFCE56',
+                    '#4BC0C0',
+                    '#9966FF',
+                    '#FF9F40'
+                ]
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            legend: {
-                position: 'right',
-                labels: {
-                    padding: 20,
-                    boxWidth: 12
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        padding: 20,
+                        boxWidth: 12
+                    }
+                },
+                title: {
+                    display: true,
+                    text: 'Budget Allocation',
+                    font: {
+                        size: 20
+                    }
                 }
-            },
-            title: {
-                display: true,
-                text: 'Expense Allocation'
             }
         }
     });

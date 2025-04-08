@@ -105,29 +105,43 @@
         
         <h1>Question 3: Budget Goals</h1>
         <p>How much do you want to save relative to your income?</p>
-        <input type="number" id="savings" name="savings" class="form-input mb-4" placeholder="Enter percentage">
-        <p class="note">**Note: Input 0 if you don't want to save.</p>
-        <div id="savingsError" class="error-message hidden">Savings should be within 0-50%.</div>
-        <button id="nextBtn" class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition duration-300 ease-in-out">Next</button>
+        
+        <form method="POST" action="{{ url_for('question3') }}" id="savingsForm">
+            <div class="mb-4">
+                <input type="number" 
+                       id="savings" 
+                       name="savings" 
+                       class="form-input" 
+                       placeholder="Enter percentage" 
+                       value="0"
+                       min="0" 
+                       max="50" 
+                       step="1">
+                <p class="note mt-2">**Note: Input 0 if you don't want to save. Maximum allowed is 50%.</p>
+            </div>
+            
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="text-red-500 mt-4">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            
+            <div class="mt-8 flex justify-between">
+                <a href="{{ url_for('question2') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition duration-300 ease-in-out">Back</a>
+                <button type="submit" id="nextBtn" class="bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition duration-300 ease-in-out">Next</button>
+            </div>
+        </form>
     </div>
 
     <script>
-        document.getElementById("nextBtn").addEventListener("click", function () {
-            var savings = document.getElementById("savings").value.trim();
-            var savingsError = document.getElementById("savingsError");
-            var isValid = true;
-
-            if (savings === "" || isNaN(savings) || parseInt(savings) < 0 || parseInt(savings) > 50) {
-                savingsError.textContent = "Savings should be within 0-50%.";
-                savingsError.classList.remove("hidden");
-                isValid = false;
-            } else {
-                savingsError.classList.add("hidden");
-            }
-
-           
-            if (isValid) {
-                window.location.href = "/question4"; 
+        document.getElementById("savingsForm").addEventListener("submit", function(e) {
+            const savings = parseFloat(document.getElementById("savings").value) || 0;
+            
+            if (savings < 0 || savings > 50) {
+                e.preventDefault();
+                alert("Savings percentage must be between 0 and 50%");
             }
         });
     </script>

@@ -16,14 +16,18 @@
     </script>
 
     <div class="container mx-auto px-4">
+        <script id="chart-data" type="application/json">
+            {{ chart_data | safe }}
+        </script>
+        
+        <!-- Restored to original large size -->
+        <div class="w-full max-w-4xl mx-auto my-8">
+            <canvas id="expenses-chart" style="height: 500px;"></canvas>
+        </div>
+        
         <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
             <h1 class="text-2xl font-bold mb-4">Your Budget Breakdown</h1>
             
-            <!-- Chart Container -->
-            <div class="mb-8" style="height: 400px;">
-                <canvas id="expenseChart"></canvas>
-            </div>
-
             <!-- Recommendations Table -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {% for category, amount in recommendations.items() %}
@@ -42,7 +46,8 @@
         </div>
     </div>
 
-    <!-- Chart initialization -->
+    <!-- Add Chart.js library BEFORE our expenses.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ url_for('static', filename='expenses.js') }}"></script>
 </body>
 </html>
