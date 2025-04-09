@@ -167,22 +167,17 @@ def question6():
 @app.route('/recommendations')
 def recommendations():
     """Budget recommendations route."""
-    print("\nEntering recommendations route")
-    print("Session data at start:", dict(session))
-    
     # Check if all required data is in session
     required_keys = ['income', 'savings_goal', 'spending_preferences', 
                     'fixed_expenses', 'location']
     
     missing_keys = [key for key in required_keys if key not in session]
-    print("Missing keys:", missing_keys)
     
     if missing_keys:
         flash(f'Please complete all questions first. Missing data: {", ".join(missing_keys)}')
         return redirect(url_for('welcome'))
     
     try:
-        print("All required data present, calculating recommendations...")
         calculator = BudgetCalculator()
         user_data = {
             'income': session['income'],
@@ -194,8 +189,10 @@ def recommendations():
         
         recommendations = calculator.calculate_recommendations(user_data)
         
+        # Calculate total income
+        total_income = session['income']['work_study'] + session['income']['external']
+        
         # Verify totals
-        total_income = sum(session['income'].values())
         total_allocated = sum(recommendations.values())
         
         if abs(total_income - total_allocated) > 0.01:  # Allow for small floating point differences
@@ -213,7 +210,7 @@ def recommendations():
             chart_data=json.dumps(chart_data),
             time_preference=session.get('time_preference', 'monthly'),
             total_income=total_income,
-            total_allocated=total_allocated
+            user_location=session['location']
         )
     except Exception as e:
         flash(f'An error occurred: {str(e)}')

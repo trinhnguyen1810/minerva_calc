@@ -1,9 +1,10 @@
-from budget.config import CITY_MULTIPLIERS, SF_BASELINES
+from budget.config import CITY_MULTIPLIERS, SF_BASELINES, CITY_BASELINES
 
 class BudgetCalculator:
     def __init__(self):
         self.city_multipliers = CITY_MULTIPLIERS
         self.sf_baselines = SF_BASELINES
+        self.city_baselines = CITY_BASELINES
 
     def calculate_recommendations(self, user_data):
         """Calculate budget recommendations based on user inputs"""
@@ -37,37 +38,50 @@ class BudgetCalculator:
         city = user_data['location']
         city_multiplier = self.city_multipliers[city]
         
+        # Use city-specific baselines when available, otherwise use SF baselines with multiplier
+        baselines = self.city_baselines.get(city, self.sf_baselines)
+        use_multiplier = city not in self.city_baselines
+        
         # Calculate allocations
         allocations = {}
-        total_allocated = 0
+        total_weighted_preference = 0
+        weights = {}
         
-        for category, ranges in self.sf_baselines.items():
+        # Calculate weights based on user preferences
+        for category, ranges in baselines.items():
             preference = user_data['spending_preferences'].get(category, 2)
             
             if preference == 1:
-                adjusted_percent = ranges['min']
+                base_percent = ranges['min']
             elif preference == 3:
-                adjusted_percent = ranges['max']
+                base_percent = ranges['max']
             else:
-                adjusted_percent = ranges['base']
+                base_percent = ranges['base']
                 
-            adjusted_percent *= city_multiplier
-            amount = available_money * adjusted_percent
+            # Apply city multiplier if using SF baselines
+            if use_multiplier:
+                adjusted_percent = base_percent * city_multiplier
+            else:
+                adjusted_percent = base_percent
+                
+            # Store weight for each category
+            weights[category] = adjusted_percent
+            total_weighted_preference += adjusted_percent
+        
+        # Normalize weights to ensure they sum to 1.0
+        for category, weight in weights.items():
+            normalized_weight = weight / total_weighted_preference if total_weighted_preference > 0 else 0
+            amount = available_money * normalized_weight
             allocations[category] = amount
-            total_allocated += amount
-
-        # Normalize to available money
-        if total_allocated > available_money:
-            ratio = available_money / total_allocated
-            allocations = {k: v * ratio for k, v in allocations.items()}
         
         # Add fixed expenses and savings
         allocations['fixed_expenses'] = fixed_expenses
         allocations['savings'] = savings_amount
         
-        # Final verification
+        # Final verification to ensure we're not exceeding the total income
         total = sum(allocations.values())
         if abs(total - total_income) > 0.01:
+            # Adjust savings slightly to account for any rounding errors
             allocations['savings'] += (total_income - total)
 
         return {k: round(v, 2) for k, v in allocations.items()}

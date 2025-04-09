@@ -6,48 +6,408 @@
     <title>Your Budget Recommendations</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background-color: #f7fafc;
+            font-family: 'Arial', sans-serif;
+        }
+        .budget-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .budget-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .category-icon {
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #e5e7eb;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+        .city-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-left: 0.5rem;
+            background-color: #EEF2FF;
+            color: #4F46E5;
+            border: 1px solid #E0E7FF;
+        }
+        .tip-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .tip-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+    </style>
 </head>
-<body class="bg-gray-100">
-    <img src="/static/logo.jpeg" alt="Minerva Budget Calculator Logo" class="mx-auto mt-8 mb-8" style="max-width: 200px;">
+<body>
+    <!-- Logo and Header -->
+    <div class="container mx-auto px-4 py-8 text-center">
+        <img src="/static/logo.jpeg" alt="Minerva Budget Calculator Logo" class="mx-auto mb-4" style="max-width: 180px;">
+        <h1 class="text-3xl font-bold mb-2">Your Budget Breakdown</h1>
+        <p class="text-gray-600 mb-2">Based on your preferences</p>
+        <div class="city-badge">
+            <span class="mr-1">📍</span> {{ session.location }}
+        </div>
+    </div>
     
-    <!-- Chart data hidden element -->
-    <script id="chartData" type="application/json">
-        {{ chart_data|safe }}
+    <!-- Hidden chart data -->
+    <script id="chart-data" type="application/json">
+        {{ chart_data | safe }}
     </script>
 
-    <div class="container mx-auto px-4">
-        <script id="chart-data" type="application/json">
-            {{ chart_data | safe }}
-        </script>
+    <div class="container mx-auto px-4 mb-12">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
         
-        <!-- Restored to original large size -->
-        <div class="w-full max-w-4xl mx-auto my-8">
-            <canvas id="expenses-chart" style="height: 500px;"></canvas>
+        <!-- Budget Summary -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h2 class="text-xl font-bold mb-6">Budget Overview</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-gray-50 p-4 rounded-lg text-center">
+                    <h3 class="text-lg font-semibold mb-2 text-gray-700">Total Income</h3>
+                    <p class="text-2xl font-bold">${{ "%.2f"|format(total_income) }}</p>
+                </div>
+                
+                <div class="bg-gray-50 p-4 rounded-lg text-center">
+                    <h3 class="text-lg font-semibold mb-2 text-gray-700">Fixed Expenses</h3>
+                    <p class="text-2xl font-bold">${{ "%.2f"|format(recommendations.fixed_expenses) }}</p>
+                    <div class="mt-2 text-sm text-gray-500">
+                        {{ "%.1f"|format((recommendations.fixed_expenses / total_income) * 100) }}% of total income
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 p-4 rounded-lg text-center">
+                    <h3 class="text-lg font-semibold mb-2 text-gray-700">Savings</h3>
+                    <p class="text-2xl font-bold">${{ "%.2f"|format(recommendations.savings) }}</p>
+                    <div class="mt-2 text-sm text-gray-500">
+                        {{ "%.1f"|format((recommendations.savings / total_income) * 100) }}% of total income
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Money flow visualization -->
+            <div class="bg-indigo-50 p-5 rounded-lg mb-6">
+                <h3 class="text-lg font-semibold mb-2 text-indigo-700 text-center">Your Money Flow</h3>
+                
+                <div class="relative mt-6 pt-6">
+                    <div class="h-10 bg-green-100 rounded-lg flex items-center justify-center text-green-800 font-bold">
+                        Total Income: ${{ "%.2f"|format(total_income) }}
+                    </div>
+                    
+                    <div class="flex absolute top-0 w-full">
+                        <!-- Calculate the percentages for dividing the bar -->
+                        {% set fixed_percent = (recommendations.fixed_expenses / total_income) * 100 %}
+                        {% set savings_percent = (recommendations.savings / total_income) * 100 %}
+                        {% set flex_percent = 100 - fixed_percent - savings_percent %}
+                        
+                        <div style="width: {{ fixed_percent }}%" class="h-4 bg-gray-400 rounded-l"></div>
+                        <div style="width: {{ savings_percent }}%" class="h-4 bg-blue-400"></div>
+                        <div style="width: {{ flex_percent }}%" class="h-4 bg-indigo-400 rounded-r"></div>
+                    </div>
+                    
+                    <div class="flex justify-between text-xs text-gray-600 mt-2">
+                        <div>Fixed Expenses</div>
+                        <div>Savings</div>
+                        <div>Flexible Spending</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Available for flexible spending -->
+            <div class="bg-indigo-50 p-4 rounded-lg text-center mb-6">
+                <h3 class="text-lg font-semibold mb-2 text-indigo-700">Available for Flexible Spending</h3>
+                {% set flexible_spending = total_income - recommendations.fixed_expenses - recommendations.savings %}
+                <p class="text-2xl font-bold text-indigo-800">${{ "%.2f"|format(flexible_spending) }}</p>
+                <div class="mt-2 text-sm text-indigo-600">
+                    {{ "%.1f"|format((flexible_spending / total_income) * 100) }}% of your total income
+                </div>
+            </div>
+            
+            <!-- Budget Distribution Chart -->
+            <div class="w-full mx-auto mt-8" style="height: 400px;">
+                <canvas id="expenses-chart"></canvas>
+            </div>
         </div>
         
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-            <h1 class="text-2xl font-bold mb-4">Your Budget Breakdown</h1>
-            
-            <!-- Recommendations Table -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {% for category, amount in recommendations.items() %}
-                <div class="bg-gray-50 p-4 rounded-lg">
-                    <h3 class="text-lg font-semibold mb-2">{{ category|title }}</h3>
-                    <p class="text-xl">${{ "%.2f"|format(amount) }}
-                        {% if time_preference == 'weekly' %}
-                        <span class="text-sm text-gray-600">
-                            (${{ "%.2f"|format(amount/4) }} weekly)
-                        </span>
+        <!-- Flexible Spending Categories -->
+        <h2 class="text-2xl font-bold mb-4">Spending Categories in {{ session.location }}</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            {% set available_money = total_income - recommendations.fixed_expenses - recommendations.savings %}
+            {% for category, amount in recommendations.items() %}
+                {% if category not in ['fixed_expenses', 'savings', 'total_income'] and amount > 0 %}
+                <div class="budget-card bg-white p-5 rounded-lg shadow">
+                    <div class="flex items-center mb-3">
+                        {% if category == 'food' %}
+                            <div class="category-icon bg-red-100 text-red-600">🍔</div>
+                            <h3 class="text-lg font-semibold">Food & Groceries</h3>
+                        {% elif category == 'transportation' %}
+                            <div class="category-icon bg-blue-100 text-blue-600">🚗</div>
+                            <h3 class="text-lg font-semibold">Transportation</h3>
+                        {% elif category == 'entertainment' %}
+                            <div class="category-icon bg-purple-100 text-purple-600">🎬</div>
+                            <h3 class="text-lg font-semibold">Entertainment</h3>
+                        {% elif category == 'personal' %}
+                            <div class="category-icon bg-green-100 text-green-600">👤</div>
+                            <h3 class="text-lg font-semibold">Personal Care</h3>
+                        {% elif category == 'gym' %}
+                            <div class="category-icon bg-yellow-100 text-yellow-600">💪</div>
+                            <h3 class="text-lg font-semibold">Health & Fitness</h3>
+                        {% else %}
+                            <div class="category-icon bg-gray-100 text-gray-600">📊</div>
+                            <h3 class="text-lg font-semibold">{{ category|title }}</h3>
                         {% endif %}
+                    </div>
+                    <p class="text-2xl font-bold mb-1">${{ "%.2f"|format(amount) }}</p>
+                    <p class="text-sm text-gray-600 mb-2">
+                        {{ "%.1f"|format((amount / available_money) * 100) if available_money > 0 else 0 }}% of flexible spending
                     </p>
+                    
+                    <div class="progress-bar">
+                        <div class="progress-fill 
+                        {% if category == 'food' %}
+                            bg-red-500
+                        {% elif category == 'transportation' %}
+                            bg-blue-500
+                        {% elif category == 'entertainment' %}
+                            bg-purple-500
+                        {% elif category == 'personal' %}
+                            bg-green-500
+                        {% elif category == 'gym' %}
+                            bg-yellow-500
+                        {% else %}
+                            bg-gray-500
+                        {% endif %}" 
+                        style="width: {{ (amount / available_money) * 100 if available_money > 0 else 0 }}%"></div>
+                    </div>
+                    
+                    {% if time_preference == 'weekly' %}
+                    <p class="text-sm text-gray-500 mt-2">
+                        ${{ "%.2f"|format(amount/4) }} weekly
+                    </p>
+                    {% endif %}
                 </div>
-                {% endfor %}
+                {% endif %}
+            {% endfor %}
+        </div>
+        
+        <!-- City-specific tips -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h2 class="text-xl font-bold mb-6">
+                Budget Tips for {{ session.location }}
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                {% if session.location == 'San Francisco' %}
+                    <div class="tip-card border-l-4 border-indigo-500 bg-indigo-50 p-4 rounded-r-lg">
+                        <h3 class="font-medium mb-2">Affordable Food Options</h3>
+                        <p class="text-gray-600">Check out local farmers markets like the Ferry Building Marketplace for fresh produce at better prices.</p>
+                    </div>
+                    <div class="tip-card border-l-4 border-indigo-500 bg-indigo-50 p-4 rounded-r-lg">
+                        <h3 class="font-medium mb-2">Transportation Savings</h3>
+                        <p class="text-gray-600">Get a Clipper Card for public transit and use BART or Muni instead of ride-sharing services when possible.</p>
+                    </div>
+                {% elif session.location == 'Berlin' %}
+                    <div class="tip-card border-l-4 border-indigo-500 bg-indigo-50 p-4 rounded-r-lg">
+                        <h3 class="font-medium mb-2">Affordable Food Options</h3>
+                        <p class="text-gray-600">Shop at budget supermarkets like Lidl and Aldi. Visit local markets before closing for discounts.</p>
+                    </div>
+                    <div class="tip-card border-l-4 border-indigo-500 bg-indigo-50 p-4 rounded-r-lg">
+                        <h3 class="font-medium mb-2">Transportation Savings</h3>
+                        <p class="text-gray-600">Get a monthly BVG pass for unlimited public transport access at a fraction of individual ticket costs.</p>
+                    </div>
+                {% elif session.location == 'Taipei' %}
+                    <div class="tip-card border-l-4 border-indigo-500 bg-indigo-50 p-4 rounded-r-lg">
+                        <h3 class="font-medium mb-2">Affordable Food Options</h3>
+                        <p class="text-gray-600">Night markets offer affordable and delicious meals often cheaper than cooking at home.</p>
+                    </div>
+                    <div class="tip-card border-l-4 border-indigo-500 bg-indigo-50 p-4 rounded-r-lg">
+                        <h3 class="font-medium mb-2">Transportation Savings</h3>
+                        <p class="text-gray-600">Use an EasyCard for discounted MRT and bus fares throughout the city.</p>
+                    </div>
+                {% elif session.location == 'Hyderabad' %}
+                    <div class="tip-card border-l-4 border-indigo-500 bg-indigo-50 p-4 rounded-r-lg">
+                        <h3 class="font-medium mb-2">Affordable Food Options</h3>
+                        <p class="text-gray-600">Local markets like Rythu Bazaar offer fresh produce at lower prices than supermarkets.</p>
+                    </div>
+                    <div class="tip-card border-l-4 border-indigo-500 bg-indigo-50 p-4 rounded-r-lg">
+                        <h3 class="font-medium mb-2">Transportation Savings</h3>
+                        <p class="text-gray-600">Consider monthly bus passes or metro cards for significant savings on daily commutes.</p>
+                    </div>
+                {% elif session.location == 'Seoul' %}
+                    <div class="tip-card border-l-4 border-indigo-500 bg-indigo-50 p-4 rounded-r-lg">
+                        <h3 class="font-medium mb-2">Affordable Food Options</h3>
+                        <p class="text-gray-600">Traditional markets like Gwangjang offer affordable meals and ingredients at lower prices.</p>
+                    </div>
+                    <div class="tip-card border-l-4 border-indigo-500 bg-indigo-50 p-4 rounded-r-lg">
+                        <h3 class="font-medium mb-2">Transportation Savings</h3>
+                        <p class="text-gray-600">T-Money card gives discounts on transfers between buses and subways, saving on transit costs.</p>
+                    </div>
+                {% elif session.location == 'Buenos Aires' %}
+                    <div class="tip-card border-l-4 border-indigo-500 bg-indigo-50 p-4 rounded-r-lg">
+                        <h3 class="font-medium mb-2">Affordable Food Options</h3>
+                        <p class="text-gray-600">Shop at local verdulerías (produce shops) and carnicerías (butchers) for better prices than supermarkets.</p>
+                    </div>
+                    <div class="tip-card border-l-4 border-indigo-500 bg-indigo-50 p-4 rounded-r-lg">
+                        <h3 class="font-medium mb-2">Transportation Savings</h3>
+                        <p class="text-gray-600">Get a SUBE card for discounted fares on buses, subways, and trains throughout the city.</p>
+                    </div>
+                {% else %}
+                    <div class="tip-card border-l-4 border-indigo-500 bg-indigo-50 p-4 rounded-r-lg">
+                        <h3 class="font-medium mb-2">General Food Savings</h3>
+                        <p class="text-gray-600">Plan your meals ahead, buy in bulk when possible, and look for local markets for fresh produce.</p>
+                    </div>
+                    <div class="tip-card border-l-4 border-indigo-500 bg-indigo-50 p-4 rounded-r-lg">
+                        <h3 class="font-medium mb-2">General Transportation Tips</h3>
+                        <p class="text-gray-600">Look into monthly transit passes, student discounts, and carpooling options to reduce costs.</p>
+                    </div>
+                {% endif %}
             </div>
+            
+            <!-- General Budget Tips -->
+            <h3 class="text-lg font-semibold mb-4">Universal Budget Tips</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="tip-card border-l-4 border-indigo-500 bg-indigo-50 p-4 rounded-r-lg">
+                    <h3 class="font-medium mb-2">50/30/20 Rule</h3>
+                    <p class="text-gray-600">Allocate 50% to needs, 30% to wants, and 20% to savings for a balanced approach.</p>
+                </div>
+                
+                <div class="tip-card border-l-4 border-indigo-500 bg-indigo-50 p-4 rounded-r-lg">
+                    <h3 class="font-medium mb-2">Track Your Spending</h3>
+                    <p class="text-gray-600">Use apps or spreadsheets to monitor where your money goes and identify areas to cut back.</p>
+                </div>
+                
+                <div class="tip-card border-l-4 border-indigo-500 bg-indigo-50 p-4 rounded-r-lg">
+                    <h3 class="font-medium mb-2">Emergency Fund</h3>
+                    <p class="text-gray-600">Aim to save 3-6 months of expenses for unexpected situations and financial security.</p>
+                </div>
+                
+                <div class="tip-card border-l-4 border-indigo-500 bg-indigo-50 p-4 rounded-r-lg">
+                    <h3 class="font-medium mb-2">Review Regularly</h3>
+                    <p class="text-gray-600">Check your budget monthly to make adjustments and ensure you're staying on track.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Reset Button -->
+        <div class="text-center mt-10 mb-6">
+            <a href="{{ url_for('reset') }}" class="bg-black hover:bg-gray-800 text-white font-bold py-2 px-6 rounded-lg transition duration-200">
+                Reset and Start Over
+            </a>
         </div>
     </div>
 
-    <!-- Add Chart.js library BEFORE our expenses.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="{{ url_for('static', filename='expenses.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chartData = JSON.parse(document.getElementById('chart-data').textContent);
+            
+            // Filter out non-spending categories for the chart if needed
+            const filteredLabels = [];
+            const filteredValues = [];
+            const backgroundColors = [];
+            
+            for(let i = 0; i < chartData.labels.length; i++) {
+                // Capitalize first letter and replace underscores
+                let label = chartData.labels[i].replace('_', ' ');
+                label = label.charAt(0).toUpperCase() + label.slice(1);
+                
+                filteredLabels.push(label);
+                filteredValues.push(chartData.values[i]);
+                
+                // Assign colors based on category
+                if(chartData.labels[i] === 'fixed_expenses') {
+                    backgroundColors.push('#4B5563'); // gray-600
+                } else if(chartData.labels[i] === 'savings') {
+                    backgroundColors.push('#3B82F6'); // blue-500
+                } else if(chartData.labels[i] === 'food') {
+                    backgroundColors.push('#EF4444'); // red-500
+                } else if(chartData.labels[i] === 'transportation') {
+                    backgroundColors.push('#3B82F6'); // blue-500
+                } else if(chartData.labels[i] === 'entertainment') {
+                    backgroundColors.push('#8B5CF6'); // violet-500
+                } else if(chartData.labels[i] === 'personal') {
+                    backgroundColors.push('#10B981'); // green-500
+                } else if(chartData.labels[i] === 'gym') {
+                    backgroundColors.push('#F59E0B'); // amber-500
+                } else {
+                    backgroundColors.push('#6B7280'); // gray-500
+                }
+            }
+            
+            // Create a pie chart
+            const ctx = document.getElementById('expenses-chart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: filteredLabels,
+                    datasets: [{
+                        data: filteredValues,
+                        backgroundColor: backgroundColors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: $${value.toFixed(2)} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '65%',
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>
